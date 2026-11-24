@@ -45,8 +45,7 @@ func githubRequest(token, method, path string, body any) ([]byte, error) {
 	return data, nil
 }
 
-// listPRComments returns review comments + issue (conversation) comments for a PR,
-// i.e. "team comments" on the PR.
+// listPRComments returns review comments + issue (conversation) comments for a PR, i.e. "team comments" on the PR.
 func listPRComments(token, owner, repo string, prNumber int) (string, error) {
 	reviewData, err := githubRequest(token, http.MethodGet,
 		fmt.Sprintf("/repos/%s/%s/pulls/%d/comments", owner, repo, prNumber), nil)

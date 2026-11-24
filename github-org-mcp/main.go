@@ -32,6 +32,7 @@ func toolDefs() []toolDef {
 		{Name: "list_pr_comments", Description: "List review + issue (team) comments on a pull request", InputSchema: withOrgan(map[string]any{"owner": str, "repo": str, "prNumber": num}, []string{"owner", "repo", "prNumber"})},
 		{Name: "add_pr_comment", Description: "Add a comment to a pull request", InputSchema: withOrgan(map[string]any{"owner": str, "repo": str, "prNumber": num, "body": str}, []string{"owner", "repo", "prNumber", "body"})},
 		{Name: "create_pull_request", Description: "Create a pull request", InputSchema: withOrgan(map[string]any{"owner": str, "repo": str, "head": str, "base": str, "title": str, "body": str}, []string{"owner", "repo", "head", "base", "title"})},
+		{Name: "reload_config", Description: "Overwrite the stored access token for this organName (non-empty token param), or reuse the existing one (empty/omitted). Exits the process afterward; Claude Code respawns it on the next tool call with the updated config.", InputSchema: withOrgan(map[string]any{"token": str}, []string{})},
 	}
 }
 
@@ -71,7 +72,7 @@ func main() {
 			if err := json.Unmarshal(args, &p); err != nil {
 				return errorResult("bad args: %v", err)
 			}
-			out, alerted, err := gitClone(organName, safe, p.RepoURL, p.Dest)
+			out, alerted, err := gitClone(organName, safe, token, p.RepoURL, p.Dest)
 			if err != nil {
 				return errorResult("%v", err)
 			}
@@ -82,7 +83,7 @@ func main() {
 			if err := json.Unmarshal(args, &p); err != nil {
 				return errorResult("bad args: %v", err)
 			}
-			out, alerted, err := gitFetch(organName, safe, p.Workdir, p.Remote)
+			out, alerted, err := gitFetch(organName, safe, token, p.Workdir, p.Remote)
 			if err != nil {
 				return errorResult("%v", err)
 			}
@@ -91,7 +92,7 @@ func main() {
 		"git_commit": func(args json.RawMessage) toolCallResult {
 			var p struct {
 				Workdir, Message string
-				Paths             []string
+				Paths            []string
 			}
 			if err := json.Unmarshal(args, &p); err != nil {
 				return errorResult("bad args: %v", err)
@@ -110,7 +111,7 @@ func main() {
 			if err := json.Unmarshal(args, &p); err != nil {
 				return errorResult("bad args: %v", err)
 			}
-			out, alerted, err := gitPush(organName, safe, p.Workdir, p.Remote, p.Branch, p.Force)
+			out, alerted, err := gitPush(organName, safe, token, p.Workdir, p.Remote, p.Branch, p.Force)
 			if err != nil {
 				return errorResult("%v", err)
 			}
@@ -176,6 +177,20 @@ func main() {
 				return errorResult("%v", err)
 			}
 			return textResult(out)
+		},
+		"reload_config": func(args json.RawMessage) toolCallResult {
+			var p struct{ Token string }
+			if err := json.Unmarshal(args, &p); err != nil {
+				return errorResult("bad args: %v", err)
+			}
+			if _, err := ReloadToken(organName, p.Token); err != nil {
+				return errorResult("%v", err)
+			}
+			s.exitAfterResponse = true
+			if p.Token != "" {
+				return textResult(fmt.Sprintf("reload_config: token overwritten for organName %q, exiting; Claude Code will respawn this instance on next call", organName))
+			}
+			return textResult(fmt.Sprintf("reload_config: token reused (param empty) for organName %q, exiting; Claude Code will respawn this instance on next call", organName))
 		},
 	}
 

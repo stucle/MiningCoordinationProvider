@@ -50,10 +50,11 @@ type toolCallResult struct {
 
 // server binds this process to exactly one organName, resolved at start.
 type server struct {
-	organName string
-	token     string
-	safe      []string
-	tools     map[string]func(args json.RawMessage) toolCallResult
+	organName         string
+	token             string
+	safe              []string
+	tools             map[string]func(args json.RawMessage) toolCallResult
+	exitAfterResponse bool // set by reload_config: exit cleanly once the response is flushed
 }
 
 func textResult(s string) toolCallResult {
@@ -100,6 +101,12 @@ func (s *server) run(in io.Reader, out io.Writer) error {
 		writer.Write(data)
 		writer.WriteByte('\n')
 		writer.Flush()
+		if s.exitAfterResponse {
+			// reload_config already persisted the new config; the actual
+			// "restart" is Claude Code respawning this process (per its
+			// mcpServers entry) the next time a tool on it is called.
+			os.Exit(0)
+		}
 	}
 	return scanner.Err()
 }

@@ -11,9 +11,8 @@ import (
 // credentialInURL matches the userinfo part of a URL, e.g. https://TOKEN@host/...
 var credentialInURL = regexp.MustCompile(`://[^/@\s]+@`)
 
-// redactArgs scrubs embedded basic-auth/token credentials out of URL-shaped
-// args before they are ever written to stderr, the footprint log, or
-// tool_response — those sinks are not secret stores.
+// redactArgs scrubs embedded basic-auth/token credentials out of URL-shaped  args before they are ever written to stderr, the footprint log,
+// or tool_response — those sinks are not secret stores.
 func redactArgs(args []string) []string {
 	out := make([]string, len(args))
 	for i, a := range args {
@@ -22,8 +21,7 @@ func redactArgs(args []string) []string {
 	return out
 }
 
-// alertLogPath is where MCP_ALERT lines are additionally mirrored as structured
-// JSON, independent of stderr, so a hook footprint script has a stable file to tail.
+// alertLogPath is where MCP_ALERT lines are additionally mirrored as structured JSON, independent of stderr, so a hook footprint script has a stable file to tail.
 func alertLogPath() string {
 	if p := os.Getenv("ALERT_LOG_PATH"); p != "" {
 		return p
@@ -48,11 +46,9 @@ func isSafeCommand(safe []string, subcommand string) bool {
 	return false
 }
 
-// guardCheck logs an alert (stderr marker + footprint file) when subcommand is
-// outside the organ's safeCommands allowlist. It never blocks execution: the
-// alert is observability for the user's own monitoring purpose, not an ACL.
-// Returns true when an alert fired, so callers can also surface the marker in
-// the tool_response text — stderr alone is invisible to a Claude Code hook.
+// guardCheck logs an alert (stderr marker + footprint file) when subcommand is outside the organ's safeCommands allowlist.
+// It never blocks execution: the alert is observability for the user's own monitoring purpose, not an ACL.
+// Returns true when an alert fired, so callers can also surface the marker in the tool_response text — stderr alone is invisible to a Claude Code hook.
 func guardCheck(organName string, safe []string, subcommand string, args []string) bool {
 	if isSafeCommand(safe, subcommand) {
 		return false
