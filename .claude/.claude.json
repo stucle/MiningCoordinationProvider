@@ -1,0 +1,18 @@
+{
+  "github-personal": {
+    "type": "stdio",
+    "command": "~/MCP/github-routing/github-org-mcp",
+    "args": [],
+    "env": {
+      "ORG_NAME": "personal"
+    }
+  },
+  "github-organization": {
+    "type": "stdio",
+    "command": "~/MCP/github-routing/github-org-mcp",
+    "args": [],
+    "env": {
+      "ORG_NAME": "organization"
+    }
+  }
+}
